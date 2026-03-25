@@ -12,22 +12,31 @@ import org.springframework.web.bind.annotation.RestController;
 
 import prog3.hei.td2_td3.model.Student;
 import prog3.hei.td2_td3.service.StudentService;
+import prog3.hei.td2_td3.validator.StudentValidator;
+import prog3.hei.td2_td3.exception.BadRequestException;
 
 @RestController
 public class StudentController {
 
     private final StudentService studentService;
+    private final StudentValidator studentValidator;
 
-    public StudentController(StudentService studentService) {
+    public StudentController(StudentService studentService, StudentValidator studentValidator) {
         this.studentService = studentService;
+        this.studentValidator = studentValidator;
     }
 
     @PostMapping("/students")
     public ResponseEntity<?> addStudents(@RequestBody List<Student> newStudents) {
 
         try {
+            studentValidator.validate(newStudents);
             List<Student> all = studentService.addAll(newStudents);
             return ResponseEntity.status(HttpStatus.CREATED).body(all);
+        }catch (BadRequestException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("400: " + e.getMessage());
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -55,7 +64,7 @@ public class StudentController {
             }
             return ResponseEntity
                     .status(HttpStatus.NOT_IMPLEMENTED)
-                    .body("501: Format non supporte.");
+                    .body("501: Format not supported.");
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
